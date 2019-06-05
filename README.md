@@ -10,4 +10,14 @@ Each member of the project should create a branch with his own name (example: Pa
 
 We will decide when to merge each work branch in the master branch based on the evolution of the project.
 
+June 5th, 2019
+
+Paul: I merged my branch into master. At this moment the master branch code behaves like this:
+	- On run it generates a random game level
+	- The level is shown for 5 seconds; during this time the mouse is inactive
+	- After 5 seconds the tiles are turned (hidden) and the game can be played for 10 seconds
+	- Each click is either a failed guess (x) or a good guess (tile color is shown)
+	- After 10 seconds the level ends and the status is shown with guessed tiles marked green and the rest marked red
+
+
 
