@@ -47,7 +47,7 @@ class Level():
     SHOW = 0
     PLAY = 1
     DONE = 2
-    
+
     def __init__(self, num_side_tiles, num_tiles_set, canvas_w, canvas_h):
         """
         Initialize the game
@@ -85,9 +85,9 @@ class Level():
     
     def check_time(self):
         current_time = millis()
-        if self.status == self.SHOW and current_time - self.show_start_time > 5000:
+        if self.status == self.SHOW and current_time - self.show_start_time > 3000:
             self.hide()
-        elif self.status == self.PLAY and current_time - self.play_start_time > 10000:
+        elif self.status == self.PLAY and current_time - self.play_start_time > 5000:
             self.done()
     
     def show(self):
