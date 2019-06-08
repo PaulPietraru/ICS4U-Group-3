@@ -9,6 +9,56 @@
 # ------------------------------------------------------------------------------
 import random
 
+class GameCollection():
+    def __init__(self, canvas_w, canvas_h, title_font, text_font, bk_img):
+        self.canvas_w = canvas_w
+        self.canvas_h = canvas_h
+        self.title_font = title_font
+        self.text_font = text_font
+        self.bk_img = bk_img
+        
+        self.button_vertical_space = (self.canvas_h - 100) / 3
+        self.button_vertical_gap = self.button_vertical_space / 3
+        self.button_height = self.button_vertical_space - self.button_vertical_gap
+        
+        bx = 50
+        by = 100
+        bw = (canvas_w - 150) / 3
+        bh = self.button_height
+        
+        tx = bx + bw + 50 
+        ty = by
+        tw = 2 * bw
+        th = bh
+        
+        self.games = [TilesGame("4 Tiles", 4, canvas_w, canvas_h), 
+                      TilesGame("7 Tiles", 7, canvas_w, canvas_h),
+                      TilesGame("9 Tiles", 9, canvas_w, canvas_h)]
+        for i in range(0, len(self.games)):
+            self.games[i].set_button(bx, by + self.button_vertical_space * i, bw, bh, tx, ty + self.button_vertical_space * i, tw, th, self.title_font, self.text_font)
+            
+    def draw(self):
+        background(self.bk_img)
+        textFont(self.title_font, 50)
+        textAlign(CENTER, CENTER);
+        textSize(50)
+        fill(255, 255, 255)
+        text("Select Your Game", self.canvas_w / 2, 50)
+        for g in self.games:
+            g.draw_button()
+            
+    def mouseMoving(self, mx, my):
+        for g in self.games:
+            g.check_mouse_over(mx, my)
+ 
+    def mouseAction(self, mx, my):
+        for g in self.games:
+            if g.check_mouse(mx, my):
+                return g
+        return None
+                
+    
+    
 class TilesGame():
     """
     A tile game
@@ -28,6 +78,11 @@ class TilesGame():
         self.canvas_h = canvas_h
         self.level = Level(num_side_tiles, 5, canvas_w, canvas_h)
         
+        self.description = """
+        Check your short term memory by trying to 
+        remember the position of colored tiles.
+        """
+        
     def draw(self):
         self.level.draw()
         
@@ -39,7 +94,60 @@ class TilesGame():
         
     def mouseMoving(self, mx, my):
         self.level.mouseMoving(mx, my)
-
+        
+    def show(self):
+        print(self.name)
+         
+    def set_button(self, bx, by, bw, bh, tx, ty, tw, th, title_font, text_font):
+        self.bx = bx
+        self.by = by
+        self.bw = bw
+        self.bh = bh
+        self.tx = tx
+        self.ty = ty
+        self.tw = tw
+        self.th = th
+        self.title_font = title_font
+        self.text_font = text_font
+        self.mouse_over = False
+       
+    def draw_button(self):    
+        stroke(200, 200, 200)
+        fill(127, 127, 127)
+        rect(self.bx, self.by, self.bw, self.bh, 30)
+        textFont(self.title_font, 30)
+        textAlign(CENTER, CENTER);
+        textSize(self.bh * 0.6)
+        fill(255, 255, 255)
+        text(self.name, self.bx + self.bw / 2, self.by + self.bh / 2)
+        self.highlight()
+        
+        rect(self.tx, self.ty, self.tw, self.th, 30)
+        textFont(self.text_font, 20)
+        textAlign(LEFT, TOP);
+        textSize(self.th * 0.2)
+        fill(0, 0, 0)
+        text(self.description, self.tx, self.ty)
+        
+    def highlight(self):
+        if self.mouse_over:
+            strokeWeight(3)
+            fill(255, 0, 255, 30)
+            rect(self.bx, self.by, self.bw, self.bh, 30)
+            strokeWeight(1)
+            fill(255, 255, 255)
+ 
+    def check_mouse_over(self, mx, my):
+        if self.bx < mx < self.bx + self.bw and self.by < my < self.by + self.bh:
+            self.mouse_over = True
+        else:
+            self.mouse_over = False
+            
+    def check_mouse(self, mx, my):
+        if self.bx < mx < self.bx + self.bw and self.by < my < self.by + self.bh:
+            return True
+        else:
+            return False
 class Level():
     """
     A level in a game
