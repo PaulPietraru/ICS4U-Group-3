@@ -3,7 +3,7 @@ from game import GameCollection
 from player import PlayerCollection
 
 # grid instance to test the positioning and drawing of a grid in Processing
-grid_size = (1920, 1080)
+grid_size = (1440, 800)
 status = 0
 player_collection = None
 current_player = None
@@ -18,7 +18,7 @@ def setup():
     
     title_font = createFont("SEASRN__.ttf", 50)
     text_font = createFont("Lato-Regular.ttf", 20)
-    bk_img = loadImage("bk_hd.jpg");
+    bk_img = loadImage("bk.jpg");
 
     player_collection = PlayerCollection("players.txt", grid_size[0], grid_size[1], title_font, bk_img)
     game_collection = GameCollection(grid_size[0], grid_size[1], title_font, text_font, bk_img)
