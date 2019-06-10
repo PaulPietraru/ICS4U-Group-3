@@ -9,6 +9,7 @@ player_collection = None
 current_player = None
 game_collection = None
 current_game = None
+start_time = millis()
 
 def setup():
     # set canvas size; use same size as the one given to the grid
@@ -29,6 +30,7 @@ def setup():
     frameRate(30)
     
 def draw():
+    
     global status
     global player_collection
     global game_collection
@@ -51,6 +53,7 @@ def mouseClicked():
     global current_game
     global current_player
     
+    
     if mouseButton == LEFT:
         if status == 0:
             current_player = player_collection.mouseAction(mouseX, mouseY)
@@ -65,6 +68,10 @@ def mouseClicked():
                 current_game.start()
         elif status == 2:
             current_game.mouseAction(mouseX, mouseY)
+            current_time = millis()
+            if current_time - start_time > 10000:
+                status = 1
+                
 
 def mouseMoved():
     global status
