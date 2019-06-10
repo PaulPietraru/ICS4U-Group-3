@@ -1,9 +1,9 @@
 class PlayerCollection():
-    def __init__(self, file_name, canvas_w, canvas_h, pc_font, pc_bk_img):
+    def __init__(self, file_name, canvas_w, canvas_h, text_font, bk_img):
         self.canvas_w = canvas_w
         self.canvas_h = canvas_h
-        self.pc_font = pc_font
-        self.pc_bk_img = pc_bk_img
+        self.text_font = text_font
+        self.bk_img = bk_img
         
         self.button_vertical_space = (self.canvas_h - 100) / 10
         self.button_vertical_gap = self.button_vertical_space / 3
@@ -15,15 +15,14 @@ class PlayerCollection():
         ty = by + self.button_height / 2
         
         self.player_names = loadStrings(file_name).tolist()
-        #print(self.player_names)
         self.players = [None for i in range(len(self.player_names))]
         for i in range(0, len(self.player_names)):
             self.players[i] = Player(self.player_names[i], 5)
             self.players[i].set_button(bx, by + self.button_vertical_space * i, 500, self.button_height, tx, ty + self.button_vertical_space * i, self.button_height * 0.5)
             
     def draw(self):
-        background(self.pc_bk_img)
-        textFont(self.pc_font, 50)
+        background(self.bk_img)
+        textFont(self.text_font, 50)
         textAlign(CENTER, CENTER);
         textSize(50)
         fill(255, 255, 255)
@@ -49,9 +48,6 @@ class Player():
         self.lives = lives
         self.points = 0
         self.seconds = 0
-        
-    def show(self):
-        print(self.name, self.lives)
         
     def set_button(self, bx, by, bw, bh, tx, ty, th):
         self.bx = bx

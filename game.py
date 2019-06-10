@@ -31,9 +31,9 @@ class GameCollection():
         tw = 2 * bw
         th = bh
         
-        self.games = [TilesGame("4 Tiles", 4, canvas_w, canvas_h), 
-                      TilesGame("7 Tiles", 7, canvas_w, canvas_h),
-                      TilesGame("9 Tiles", 9, canvas_w, canvas_h)]
+        self.games = [TilesGame("4 Tiles", 4, canvas_w, canvas_h, title_font, text_font, bk_img), 
+                      TilesGame("7 Tiles", 7, canvas_w, canvas_h, title_font, text_font, bk_img),
+                      TilesGame("9 Tiles", 9, canvas_w, canvas_h, title_font, text_font, bk_img)]
         for i in range(0, len(self.games)):
             self.games[i].set_button(bx, by + self.button_vertical_space * i, bw, bh, tx, ty + self.button_vertical_space * i, tw, th, self.title_font, self.text_font)
             
@@ -56,15 +56,18 @@ class GameCollection():
             if g.check_mouse(mx, my):
                 return g
         return None
-                
-    
-    
+
+
 class TilesGame():
     """
     A tile game
     """
     
-    def __init__(self, name, num_side_tiles, canvas_w, canvas_h):
+    BEFORE_LEVEL = 0
+    PLAY_LEVEL = 1
+    GAME_OVER = 2
+    
+    def __init__(self, name, num_side_tiles, canvas_w, canvas_h, title_font, text_font, bk_img):
         """
         Initialize the game
         :param name: name of the game
@@ -72,31 +75,122 @@ class TilesGame():
         :param canvas_w: canvas width (for positioning)
         :param canvas_h: canvas height (for positioning)
         """
-        self.name = name
-        self.num_side_tiles = num_side_tiles
-        self.canvas_w = canvas_w
-        self.canvas_h = canvas_h
-        self.level = Level(num_side_tiles, 5, canvas_w, canvas_h)
         
         self.description = """
         Check your short term memory by trying to 
         remember the position of colored tiles.
         """
+        self.bk_img = bk_img
+        self.title_font = title_font
+        self.text_font = text_font
         
+        self.status = self.PLAY_LEVEL
+        self.name = name
+        self.num_side_tiles = num_side_tiles
+        self.canvas_w = canvas_w
+        self.canvas_h = canvas_h
+        # compute the size of screen parts
+        
+        self.level_w = min(canvas_w, canvas_h)
+        self.level_x = (canvas_w / 2) - (self.level_w / 2)
+        self.level_y = 0
+        
+        self.player_w = (self.canvas_w - self.level_w) / 2
+        self.player_h = self.canvas_h / 3
+        self.player_x = 0
+        self.player_y = 0
+        
+        self.game_w = (self.canvas_w - self.level_w) / 2
+        self.game_x = 0
+        self.game_y = self.player_h
+        self.game_h = self.player_h * 2
+        
+        self.top_w = self.player_w
+        self.top_x = self.player_w + self.level_w
+        self.top_y = 0
+        
+        self.current_level = Level(1, num_side_tiles, 5, self.level_x, self.level_y, self.level_w)
+
+    def set_player(self, player):
+        self.player = player
+                
     def draw(self):
-        self.level.draw()
+        background(self.bk_img)
+        c1 = 20
+        c2 = c1 / 2
+        c3 = c1 + c2
+        textFont(self.title_font, 30)
+        textAlign(CENTER, CENTER);
+        textSize(30)
+        self.draw_player_area(self.player_x + c1, self.player_y + c1, self.player_w - c3, self.player_h - c3, 30)
+        self.draw_game_area(self.game_x + c1, self.game_y + c2, self.game_w - c3, self.game_h - c3, 30)
+        self.draw_level_area(self.level_x + c2, self.level_y + c1, self.level_w - 2 * c2, self.canvas_h - 2 * c1, 30)
+        self.draw_top_area(self.top_x + c2, self.top_y + c1, self.top_w - c3, self.canvas_h - 2 * c1, 30)
+        if self.status == self.BEFORE_LEVEL:
+            None
+        elif self.status == self.PLAY_LEVEL:
+            self.current_level.draw()
+        elif self.status == self.GAME_OVER:
+            None
+    
+    def draw_player_area(self, x, y, w, h, r):
+        stroke(200, 200, 200)
+        fill(0, 0, 0, 100)
+        rect(x, y, w, h, r)
+        fill(255, 255, 255)
+        text(self.player.name, x + w / 2, y + h / 6)
+        text("Lives: " + str(self.player.lives), x + w / 2, h / 2)
+        text("Score: " + str(self.player.points), x + w / 2, 5 * h / 6)
+    
+    def draw_game_area(self, x, y, w, h, r):
+        stroke(200, 200, 200)
+        fill(0, 0, 0, 100)
+        rect(x, y, w, h, r)
+        fill(255, 255, 255)
+        text(self.name, x + w / 2, y + h / 12)
+        text("Level: " + str(self.current_level.level_number), x + w / 2, y + h / 4)
+        text("Time Left: " + str(0), x + w / 2, y + 5 * h / 12)
+        text("Clicks Left: " + str(0), x + w / 2, y + 7 * h / 12)
+        self.draw_level_button(x, y + 4 * h / 6, w, h / 6, r)
+        self.draw_quit_button(x, y + 5 * h / 6, w, h / 6, r)
+        textSize(30)
+        
+    def draw_level_button(self, x, y, w, h, r):
+        stroke(200, 200, 200)
+        fill(127, 127, 127)
+        rect(x + 20 , y + 10 , w - 40, h - 20, r)
+        textSize(h * 0.3)
+        fill(255, 255, 255)
+        text("Start Level", x + w / 2, y + h / 2)
+        
+    def draw_quit_button(self, x, y, w, h, r):
+        stroke(200, 200, 200)
+        fill(127, 127, 127)
+        rect(x + 20 , y + 10 , w - 40, h - 20, r)
+        textSize(h * 0.3)
+        fill(255, 255, 255)
+        text("Quit Game", x + w / 2, y + h / 2)
+    
+    def draw_level_area(self, x, y, w, h, r):
+        stroke(200, 200, 200)
+        fill(0, 0, 0, 100)
+        rect(x, y, w, h, r)
+    
+    def draw_top_area(self, x, y, w, h, r):
+        stroke(200, 200, 200)
+        fill(0, 0, 0, 100)
+        rect(x, y, w, h, r)
+        fill(255, 255, 255)
+        text("Top Scores", x + w / 2, y + 30)
         
     def start(self):
-        self.level.show()
+        self.current_level.show()
         
     def mouseAction(self, mx, my):
-        self.level.mouseAction(mx, my)
+        self.current_level.mouseAction(mx, my)
         
     def mouseMoving(self, mx, my):
-        self.level.mouseMoving(mx, my)
-        
-    def show(self):
-        print(self.name)
+        self.current_level.mouseMoving(mx, my)
          
     def set_button(self, bx, by, bw, bh, tx, ty, tw, th, title_font, text_font):
         self.bx = bx
@@ -148,6 +242,8 @@ class TilesGame():
             return True
         else:
             return False
+
+
 class Level():
     """
     A level in a game
@@ -156,21 +252,27 @@ class Level():
     PLAY = 1
     DONE = 2
 
-    def __init__(self, num_side_tiles, num_tiles_set, canvas_w, canvas_h):
+    def __init__(self, level_number, num_side_tiles, num_tiles_set, level_x, level_y, level_w):
         """
         Initialize the game
         :param num_side_tiles: number of tiles on the side of the grid
         :param canvas_w: canvas width (for positioning)
         :param canvas_h: canvas height (for positioning)
         """
+        self.level_number = level_number
         self.num_side_tiles = num_side_tiles
         self.num_tiles_set = num_tiles_set
-        self.canvas_w = canvas_w
-        self.canvas_h = canvas_h
+        self.level_x = level_x
+        self.level_y = level_y
+        self.level_w = level_w
         self.set_tiles = [[False for cl in range(self.num_side_tiles)] for ln in range(self.num_side_tiles)]
         self.color_tiles = [[(127, 127, 127) for cl in range(self.num_side_tiles)] for ln in range(self.num_side_tiles)]
         self.generate_level()
-        self.grid = Grid(num_side_tiles, canvas_w, canvas_h, self.set_tiles, self.color_tiles)
+        
+        grid_x = level_x + level_w * 0.05
+        grid_y = level_y + level_w * 0.05
+        grid_w = level_w * 0.9
+        self.grid = Grid(num_side_tiles, grid_x, grid_y, grid_w, self.set_tiles, self.color_tiles)
         self.show_start_time = None
         self.play_start_time = None
         self.enable_mouse_action = False
@@ -227,7 +329,7 @@ class Grid():
     A grid used in a game
     """
     
-    def __init__(self, num_side_tiles, canvas_w, canvas_h, set_tiles, color_tiles):
+    def __init__(self, num_side_tiles, grid_x, grid_y, grid_w, set_tiles, color_tiles):
         """
         Initialize the grid
         :param num_side_tiles: number of tiles on the side of the grid
@@ -238,10 +340,9 @@ class Grid():
         self.set_tiles = set_tiles
         self.color_tiles = color_tiles
         # compute grid width and position on the canvas
-        self.grid_w = min(canvas_w, canvas_h) * 0.9
-        self.grid_x = (canvas_w / 2) - (self.grid_w / 2)
-        self.grid_y = (canvas_h / 2) - (self.grid_w / 2)
-        
+        self.grid_w = grid_w
+        self.grid_x = grid_x
+        self.grid_y = grid_y
         # compute tile size
         self.tile_w = self.grid_w / num_side_tiles
         
@@ -262,6 +363,7 @@ class Grid():
         """
         Draw the grid and all the tiles
         """
+        fill(0, 0, 0)
         rect(self.grid_x, self.grid_y, self.grid_w, self.grid_w)
         # draw each tile
         for line in self.tiles:
@@ -322,9 +424,10 @@ class Tile():
         """
         Draw the tile exposed
         """
+        c = self.edge_weight - 1
         stroke(self.edge_color[0], self.edge_color[1], self.edge_color[2])
         fill(self.bk_color[0], self.bk_color[1], self.bk_color[2])
-        rect(self.x, self.y, self.w, self.w)
+        rect(self.x + c, self.y + c, self.w - 2 * c, self.w - 2 * c)
         
     def draw_hidden(self):
         """
@@ -378,7 +481,7 @@ class Tile():
         if self.mouse_over:
             strokeWeight(3)
             fill(255, 255, 255, 30)
-            rect(self.x, self.y, self.w, self.w)
+            rect(self.x + 2, self.y + 2, self.w - 4, self.w - 4)
             strokeWeight(self.edge_weight)
     
     def check_mouse(self, mx, my):

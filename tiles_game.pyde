@@ -34,7 +34,7 @@ def draw():
     global game_collection
     global current_game
     # reset background to black
-    background(0)
+    #background(0)
     # draw 
     if status == 0:
         player_collection.draw()
@@ -55,12 +55,11 @@ def mouseClicked():
         if status == 0:
             current_player = player_collection.mouseAction(mouseX, mouseY)
             if current_player is not None:
-                current_player.show()
                 status = 1
         elif status == 1:
             current_game = game_collection.mouseAction(mouseX, mouseY)
             if current_game is not None:
-                current_game.show()
+                current_game.set_player(current_player)
                 status = 2
                 current_game.start()
         elif status == 2:
