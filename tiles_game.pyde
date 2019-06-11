@@ -31,7 +31,7 @@ def setup():
     
     # set canvas size and frame rate
     size(grid_size[0], grid_size[1])
-    frameRate(30)
+    frameRate(60)
     
 def draw():
     global stage
@@ -79,3 +79,6 @@ def mouseMoved():
         game_collection.mouse_moving(mouseX, mouseY)
     elif stage == PLAYING_GAME:
         current_game.mouse_moving(mouseX, mouseY)
+        
+def mouseDragged():
+    mouseClicked()
