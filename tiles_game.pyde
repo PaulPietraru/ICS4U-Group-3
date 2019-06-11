@@ -79,3 +79,6 @@ def mouseMoved():
         game_collection.mouse_moving(mouseX, mouseY)
     elif stage == PLAYING_GAME:
         current_game.mouse_moving(mouseX, mouseY)
+        
+def mouseDragged():
+    mouseClicked()
