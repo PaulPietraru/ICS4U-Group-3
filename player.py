@@ -1,3 +1,5 @@
+from gui import Button
+
 class PlayerCollection():
     def __init__(self, file_name, canvas_w, canvas_h, text_font, bk_img):
         self.canvas_w = canvas_w
@@ -17,8 +19,10 @@ class PlayerCollection():
         self.player_names = loadStrings(file_name).tolist()
         self.players = [None for i in range(len(self.player_names))]
         for i in range(0, len(self.player_names)):
-            self.players[i] = Player(self.player_names[i], 5)
-            self.players[i].set_button(bx, by + self.button_vertical_space * i, 500, self.button_height, tx, ty + self.button_vertical_space * i, self.button_height * 0.5)
+            self.players[i] = Player(self.player_names[i], 2)
+            button = Button(self.player_names[i], bx, by + self.button_vertical_space * i, 500, self.button_height, 30, 0.5, 1, 
+                    (200, 200, 200), (127, 127, 127), (255, 255, 255), text_font, (255, 0, 255), 30, 3)
+            self.players[i].set_selection_button(button)
             
     def draw(self):
         background(self.bk_img)
@@ -28,15 +32,15 @@ class PlayerCollection():
         fill(255, 255, 255)
         text("Select Your Name", self.canvas_w / 2, 50)
         for p in self.players:
-            p.draw_button()
+            p.draw_selection_button()
             
-    def mouseMoving(self, mx, my):
+    def mouse_moving(self, mx, my):
         for p in self.players:
             p.check_mouse_over(mx, my)
  
-    def mouseAction(self, mx, my):
+    def mouse_clicked(self, mx, my):
         for p in self.players:
-            if p.check_mouse(mx, my):
+            if p.check_button_clicked(mx, my):
                 return p
         return None
                 
@@ -49,41 +53,20 @@ class Player():
         self.points = 0
         self.seconds = 0
         
-    def set_button(self, bx, by, bw, bh, tx, ty, th):
-        self.bx = bx
-        self.by = by
-        self.bw = bw
-        self.bh = bh
-        self.tx = tx
-        self.ty = ty
-        self.th = th
-        self.mouse_over = False
+    def lose_life(self):
+        self.lives = self.lives - 1
         
-    def draw_button(self):    
-        stroke(200, 200, 200)
-        fill(127, 127, 127)
-        rect(self.bx, self.by, self.bw, self.bh, 30)
-        textAlign(CENTER, CENTER);
-        textSize(self.th)
-        fill(255, 255, 255)
-        text(self.name, self.tx, self.ty)
-        self.highlight()
+    def update_points(self):
+        self.points = self.points + 1
         
-    def highlight(self):
-        if self.mouse_over:
-            strokeWeight(3)
-            fill(255, 0, 255, 30)
-            rect(self.bx, self.by, self.bw, self.bh, 30)
-            strokeWeight(1)
+    def set_selection_button(self, button):
+        self.select_button = button
+        
+    def draw_selection_button(self):    
+        self.select_button.draw()
  
     def check_mouse_over(self, mx, my):
-        if self.bx < mx < self.bx + self.bw and self.by < my < self.by + self.bh:
-            self.mouse_over = True
-        else:
-            self.mouse_over = False
+        self.select_button.check_mouse_over(mx, my)
             
-    def check_mouse(self, mx, my):
-        if self.bx < mx < self.bx + self.bw and self.by < my < self.by + self.bh:
-            return True
-        else:
-            return False
+    def check_button_clicked(self, mx, my):
+        return self.select_button.check_mouse_click(mx, my)
