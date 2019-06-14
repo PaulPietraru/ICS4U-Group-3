@@ -105,8 +105,7 @@ class TilesGame():
         self.compute_screen_areas()
         
         self.num_tiles_set = 5
-        self.crt_level_num = 1
-        self.current_level = Level(self, self.crt_level_num, self.num_side_tiles, self.num_tiles_set, 3000, 3, self.level_x, self.level_y, self.level_w)
+        self.current_level = Level(self, 1, self.num_side_tiles, self.num_tiles_set, 3000, 3, self.level_x, self.level_y, self.level_w)
 
     def compute_screen_areas(self):
         self.level_w = min(self.canvas_w, self.canvas_h)
@@ -174,22 +173,10 @@ class TilesGame():
         elif self.status == self.GAME_OVER:
             self.current_level.draw()
             textFont(self.title_font, 30)
-            textAlign(CENTER, CENTER)
+            textAlign(CENTER, CENTER);
             textSize(120)
             fill(255, 127, 127)
             text("GAME OVER", self.canvas_w / 2, self.canvas_h / 2)
-            
-        if self.status == self.AFTER_LEVEL:
-            textFont(self.title_font, 30)
-            textAlign(CENTER, CENTER)
-            textSize(90)
-            if self.level_status:
-                fill(127, 255, 127)
-                text("Well Done", self.canvas_w / 2, self.canvas_h / 2)
-            else:
-                fill(255, 127, 127)
-                text("Try Again", self.canvas_w / 2, self.canvas_h / 2)
-                    
             
     def mouse_clicked(self, mx, my):
         self.current_level.mouseAction(mx, my)
@@ -198,10 +185,9 @@ class TilesGame():
             self.current_level.show()
             self.clicks_element.update("Clicks Left: " + str(self.current_level.clicks_left))
         elif self.status == self.AFTER_LEVEL and self.level_button.check_mouse_click(mx, my):
-            self.current_level = Level(self, self.crt_level_num, self.num_side_tiles, self.num_tiles_set, 3000, 3, self.level_x, self.level_y, self.level_w)
+            self.current_level = Level(self, 1, self.num_side_tiles, self.num_tiles_set, 3000, 3, self.level_x, self.level_y, self.level_w)
             self.status = self.PLAY_LEVEL
             self.current_level.show()
-            self.level_element.update("Level: " + str(self.crt_level_num))
             self.clicks_element.update("Clicks Left: " + str(self.current_level.clicks_left))
 
         if self.quit_button.check_mouse_click(mx, my):
@@ -236,15 +222,12 @@ class TilesGame():
         if status == Level.FAILED:
             self.player.lose_life()
             self.lives_element.update("Lives: " + str(self.player.lives))
-            self.level_status = False
         
         if status == Level.SUCCESS:
             self.player.update_points()
             self.score_element.update("Score: " + str(self.player.points))
             self.num_tiles_set = self.num_tiles_set + 1
             self.num_side_tiles = self.num_side_tiles + 1
-            self.crt_level_num = self.crt_level_num + 1
-            self.level_status = True
         
         if self.player.lives == 0:
             self.status = self.GAME_OVER
