@@ -1,72 +1,23 @@
 # -------------------------------------------------------------------------------
 # Name:           game.py
 #
-# Purpose:        Defines a game
+# Purpose:        Defines a game and a level
 #
 # Author:         Pietraru.P
-#
-# Created:        29/05/2019
 # ------------------------------------------------------------------------------
 import random
+from gui import GuiVisualParams
 from gui import Button
-from gui import TextArea
 from gui import ScreenArea
 from gui import Grid
 
-class GameCollection():
-    def __init__(self, canvas_w, canvas_h, title_font, text_font, bk_img):
-        self.canvas_w = canvas_w
-        self.canvas_h = canvas_h
-        self.title_font = title_font
-        self.text_font = text_font
-        self.bk_img = bk_img
-        
-        self.button_vertical_space = (self.canvas_h - 100) / 3
-        self.button_vertical_gap = self.button_vertical_space / 3
-        self.button_height = self.button_vertical_space - self.button_vertical_gap
-        
-        bx = 50
-        by = 100
-        bw = (canvas_w - 150) / 3
-        bh = self.button_height
-        
-        tx = bx + bw + 50 
-        ty = by
-        tw = 2 * bw
-        th = bh
-        
-        self.games = [TilesGame("3 Tiles", 3, canvas_w, canvas_h, title_font, text_font, bk_img), 
-                      TilesGame("4 Tiles", 4, canvas_w, canvas_h, title_font, text_font, bk_img),
-                      TilesGame("5 Tiles", 5, canvas_w, canvas_h, title_font, text_font, bk_img)]
-        for i in range(0, len(self.games)):
-            button = Button(self.games[i].name, bx, by + self.button_vertical_space * i, bw, bh, 30, 0.6, 1, 
-                    (200, 200, 200), (127, 127, 127), (255, 255, 255), title_font, (255, 0, 255), 30, 3)
-            text_area = TextArea(self.games[i].description, tx, ty + self.button_vertical_space * i, tw, th, 30, 0.2, 1, 
-                                 self.text_font, (200, 200, 200), (240, 240, 240), (50, 50, 50))
-            self.games[i].set_select_gui(button, text_area)
-            
-    def draw(self):
-        background(self.bk_img)
-        textFont(self.title_font, 50)
-        textAlign(CENTER, CENTER);
-        textSize(50)
-        fill(255, 255, 255)
-        text("Select Your Game", self.canvas_w / 2, 50)
-        for g in self.games:
-            g.draw_selection_gui()
-            
-    def mouse_moving(self, mx, my):
-        for g in self.games:
-            g.check_mouse_over(mx, my)
- 
-    def mouse_clicked(self, mx, my):
-        for g in self.games:
-            if g.check_mouse(mx, my):
-                return g
-        return None
-
-
-class TilesGame():
+# A basic tiles game
+# Presents a grid with tiles based on a level class
+# The purpose of the game is to remember the position of each tile in each level
+# This class is the base for other games. By itself it doesn't do anything.
+#
+# !!! A game has to inherit from this class and implement generate_level and update_level_parameters methods
+class TilesGame(object):
     """
     A tile game
     """
@@ -80,17 +31,12 @@ class TilesGame():
     def __init__(self, name, num_side_tiles, canvas_w, canvas_h, title_font, text_font, bk_img):
         """
         Initialize the game
-        :param name: name of the game
-        :param num_side_tiles: number of tiles on the side of the grid
-        :param canvas_w: canvas width (for positioning)
-        :param canvas_h: canvas height (for positioning)
         """
+        self.scores_file_name = "scores_" + self.__class__.__name__ + ".txt"
+        self.top_scores = []
+        self.load_top_scores()
         
-        self.description = """
-        Check your short term memory by trying to 
-        remember the position of tiles while difficulty
-        gradually increases.
-        """
+        self.description = ""
         self.bk_img = bk_img
         self.title_font = title_font
         self.text_font = text_font
@@ -101,12 +47,58 @@ class TilesGame():
         self.canvas_w = canvas_w
         self.canvas_h = canvas_h
         
+        self.buttons_gvp = GuiVisualParams()
+        self.buttons_gvp.text_font = title_font
+        
+        self.sa_gvp = GuiVisualParams()
+        self.sa_gvp.text_font = title_font
+        self.sa_gvp.bk_color = (20, 20, 20)
+        self.sa_gvp.text_hight_percentage = 0.35
+        
         # compute the size of screen parts
         self.compute_screen_areas()
         
         self.num_tiles_set = 5
         self.crt_level_num = 1
-        self.current_level = Level(self, self.crt_level_num, self.num_side_tiles, self.num_tiles_set, 3000, 3, self.level_x, self.level_y, self.level_w)
+        self.show_time = 3000
+        self.extra_clicks = 3
+        self.current_level = self.generate_level()
+
+
+    # Create the level instance
+    def generate_level(self):
+        return None
+
+    # Update the level parameters
+    def update_level_parameters(self):
+        pass
+
+    # Load the top scores from a file
+    def load_top_scores(self):
+        self.lines = loadStrings(self.scores_file_name)
+        if self.lines != None:
+            self.lines = list(l for l in self.lines if l.strip())
+            for i in range(len(self.lines)):
+                if i == 10:
+                    break
+                record = self.lines[i].split(',')
+                self.top_scores.append((record[0], int(record[1])))
+        self.top_scores = sorted(self.top_scores, key=lambda t: t[1], reverse=True)
+
+    def save_top_scores(self):
+        self.top_scores = sorted(self.top_scores, key=lambda t: t[1], reverse=True)
+        lines = []
+        for i in range(len(self.top_scores)):
+            if i == 10:
+                break
+            lines.append(self.top_scores[i][0] + "," + str(self.top_scores[i][1]))
+        saveStrings("data/" + self.scores_file_name, lines)
+
+    def set_player(self, player):
+        self.status = self.BEFORE_LEVEL
+        self.player = player
+        self.divide_screen()
+
 
     def compute_screen_areas(self):
         self.level_w = min(self.canvas_w, self.canvas_h)
@@ -128,69 +120,77 @@ class TilesGame():
         self.top_y = 0
         self.top_h = self.canvas_h
 
-    def set_player(self, player):
-        self.status = self.BEFORE_LEVEL
-        self.player = player
-        self.divide_screen()
 
     def divide_screen(self):
         c1 = 20
         c2 = c1 / 2
         c3 = c1 + c2
         
-        self.player_area = ScreenArea(3, self.player_x + c1, self.player_y + c1, self.player_w - c3, self.player_h - c3, 30,
-                            (0, 0, 0), 100, 1, (200, 200, 200), (255, 255, 255), self.title_font)
+        self.player_area = ScreenArea(3, self.player_x + c1, self.player_y + c1, self.player_w - c3, self.player_h - c3, self.sa_gvp)
         self.player_area.add_text_element(self.player.name)
         self.lives_element = self.player_area.add_text_element("Lives: " + str(self.player.lives))
         self.score_element = self.player_area.add_text_element("Score: " + str(self.player.points))
         
-        self.game_area = ScreenArea(6, self.game_x + c1, self.game_y + c2, self.game_w - c3, self.game_h - c3, 30,
-                            (0, 0, 0), 100, 1, (200, 200, 200), (255, 255, 255), self.title_font)
+        self.game_area = ScreenArea(7, self.game_x + c1, self.game_y + c2, self.game_w - c3, self.game_h - c3, self.sa_gvp)
         self.game_area.add_text_element(self.name)
         self.level_element = self.game_area.add_text_element("Level: " + str(self.current_level.level_number))
         self.time_element = self.game_area.add_text_element("Time Playing: " + str(0))
         self.clicks_element = self.game_area.add_text_element("Clicks Left: " + str(0))
-        self.level_button = self.game_area.add_button_element("Start Level", 30, 0.3, 1, (200, 200, 200), (127, 127, 127), (255, 255, 255), (255, 0, 255), 30, 3)
-        self.quit_button = self.game_area.add_button_element("Quit Game", 30, 0.3, 1, (200, 200, 200), (127, 127, 127), (255, 255, 255), (255, 0, 255), 30, 3)
+        self.tiles_element = self.game_area.add_text_element("Tiles Left: " + str(0))
+        self.level_button = self.game_area.add_button_element("Start Level", self.buttons_gvp)
+        self.quit_button = self.game_area.add_button_element("Quit Game", self.buttons_gvp)
         
-        self.level_area = ScreenArea(1, self.level_x + c2, self.level_y + c1, self.level_w - 2 * c2, self.canvas_h - 2 * c1, 30,
-                            (0, 0, 0), 100, 1, (200, 200, 200), (255, 255, 255), self.title_font)
-        self.top_area = ScreenArea(10, self.top_x + c2, self.top_y + c1, self.top_w - c3, self.canvas_h - 2 * c1, 30,
-                            (0, 0, 0), 100, 1, (200, 200, 200), (255, 255, 255), self.title_font)
+        self.level_area = ScreenArea(1, self.level_x + c2, self.level_y + c1, self.level_w - 2 * c2, self.canvas_h - 2 * c1, self.sa_gvp)
+        
+        tsa_gvp = GuiVisualParams()
+        tsa_gvp.text_font = self.sa_gvp.text_font
+        tsa_gvp.bk_color = self.sa_gvp.bk_color
+        tsa_gvp.text_hight_percentage = 0.3
+        self.top_area = ScreenArea(11, self.top_x + c2, self.top_y + c1, self.top_w - c3, self.canvas_h - 2 * c1, tsa_gvp)
         self.top_area.add_text_element("Top Scores")
-        
+        for i in range(len(self.top_scores)):
+            if i == 10:
+                break
+            self.top_area.add_text_element(self.top_scores[i][0] + ": " + str(self.top_scores[i][1]))
+                
     def draw(self):
         background(self.bk_img)
         self.player_area.draw()
         self.game_area.draw()
         self.level_area.draw()
         self.top_area.draw()
-        if self.status == self.SELECTING:
-            None
-        elif self.status == self.BEFORE_LEVEL:
-            None
+        if self.status == self.SELECTING or self.status == self.BEFORE_LEVEL:
+            pass
         elif self.status == self.PLAY_LEVEL or self.status == self.AFTER_LEVEL:
             self.current_level.draw()
         elif self.status == self.GAME_OVER:
             self.current_level.draw()
-            textFont(self.title_font, 30)
-            textAlign(CENTER, CENTER)
-            textSize(120)
-            fill(255, 127, 127)
-            text("GAME OVER", self.canvas_w / 2, self.canvas_h / 2)
+            self.draw_game_over_message()
             
         if self.status == self.AFTER_LEVEL:
-            textFont(self.title_font, 30)
-            textAlign(CENTER, CENTER)
-            textSize(90)
-            if self.level_status:
-                fill(127, 255, 127)
-                text("Well Done", self.canvas_w / 2, self.canvas_h / 2)
-            else:
-                fill(255, 127, 127)
-                text("Try Again", self.canvas_w / 2, self.canvas_h / 2)
-                    
-            
+            self.draw_level_end_message()
+
+
+    def draw_game_over_message(self):
+        textFont(self.title_font, 30)
+        textAlign(CENTER, CENTER)
+        textSize(120)
+        fill(255, 127, 127)
+        text("GAME OVER", self.canvas_w / 2, self.canvas_h / 2)
+
+
+    def draw_level_end_message(self):
+        textFont(self.title_font, 30)
+        textAlign(CENTER, CENTER)
+        textSize(90)
+        if self.level_status:
+            fill(127, 255, 127)
+            text("Well Done", self.canvas_w / 2, self.canvas_h / 2)
+        else:
+            fill(255, 127, 127)
+            text("Try Again", self.canvas_w / 2, self.canvas_h / 2)
+
+
     def mouse_clicked(self, mx, my):
         self.current_level.mouseAction(mx, my)
         if self.status == self.BEFORE_LEVEL and self.level_button.check_mouse_click(mx, my):
@@ -198,7 +198,7 @@ class TilesGame():
             self.current_level.show()
             self.clicks_element.update("Clicks Left: " + str(self.current_level.clicks_left))
         elif self.status == self.AFTER_LEVEL and self.level_button.check_mouse_click(mx, my):
-            self.current_level = Level(self, self.crt_level_num, self.num_side_tiles, self.num_tiles_set, 3000, 3, self.level_x, self.level_y, self.level_w)
+            self.current_level = self.generate_level()
             self.status = self.PLAY_LEVEL
             self.current_level.show()
             self.level_element.update("Level: " + str(self.crt_level_num))
@@ -206,32 +206,26 @@ class TilesGame():
 
         if self.quit_button.check_mouse_click(mx, my):
             exit()
-    
+
+
     def mouse_moving(self, mx, my):
-        self.current_level.mouseMoving(mx, my)
+        self.current_level.mouse_moving(mx, my)
         self.level_button.check_mouse_over(mx, my)
         self.quit_button.check_mouse_over(mx, my)
-    
-    def set_select_gui(self, button, text_area):
-        self.select_button = button
-        self.select_text_area = text_area 
-       
-    def draw_selection_gui(self):    
-        self.select_button.draw()
-        self.select_text_area.draw()
-        
-    def check_mouse_over(self, mx, my):
-        self.select_button.check_mouse_over(mx, my)
-            
-    def check_mouse(self, mx, my):
-        return self.select_button.check_mouse_click(mx, my)
+
 
     def set_level_clicks_left(self, clicks_left):
         self.clicks_element.update("Clicks Left: " + str(clicks_left))
-    
+
+
+    def set_level_tiles_left(self, tiles_left):
+        self.tiles_element.update("Tiles Left: " + str(tiles_left))
+
+
     def set_time_played(self, time_played):
         self.time_element.update("Time Playing: " + str(time_played / 1000))
-        
+
+
     def current_level_done(self, status):
         if status == Level.FAILED:
             self.player.lose_life()
@@ -241,29 +235,31 @@ class TilesGame():
         if status == Level.SUCCESS:
             self.player.update_points()
             self.score_element.update("Score: " + str(self.player.points))
-            self.num_tiles_set = self.num_tiles_set + 1
-            self.num_side_tiles = self.num_side_tiles + 1
-            self.crt_level_num = self.crt_level_num + 1
+            self.update_level_parameters()
             self.level_status = True
         
         if self.player.lives == 0:
+            self.top_scores.append((self.player.name, self.player.points))
+            self.save_top_scores()
             self.status = self.GAME_OVER
         else:
             self.status = self.AFTER_LEVEL
 
-class Level():
-    """
-    A level in a game
-    """
+
+# A basic level in a game
+# Presents a grid with tiles based on a generated layout
+# The level implements the rules of the game.
+# This class is the base for other games levels. By itself it doesn't do anything.
+# A level has these states: SHOW, PLAY, FAILED, SUCCESS
+#
+# !!! A game level has to inherit from this class and implement: generate_level and evaluate_level methods
+class Level(object):
     SHOW = 0
     PLAY = 1
     FAILED = 2
     SUCCESS = 3
 
     def __init__(self, parent_game, level_number, num_side_tiles, num_tiles_set, show_time, extra_clicks, level_x, level_y, level_w):
-        """
-        Initialize the game
-        """
         self.parent_game = parent_game
         self.level_number = level_number
         self.num_side_tiles = num_side_tiles
@@ -289,63 +285,61 @@ class Level():
         self.enable_mouse_action = False
         self.status = self.SHOW
         
+    # Generate a level's tiles positions and colors
     def generate_level(self):
-        tile_color = (random.randrange(256), random.randrange(256), random.randrange(256))
-        count = self.num_tiles_set
-        while count != 0:
-            l = random.randrange(self.num_side_tiles)
-            c = random.randrange(self.num_side_tiles)
-            if not self.set_tiles[l][c]:
-                self.set_tiles[l][c] = True
-                self.color_tiles[l][c] = tile_color
-                count = count - 1
-        
+        # Actual levels have to implement this
+        pass
+
+    # Evaluate a level status after each click
+    def evaluate_level(self, latest_tile_status):
+        # Actual levels have to implement this
+        pass
+    
+    # Draw the level in its current status
     def draw(self):
         self.check_time()
         self.grid.draw()
     
+    # Check the current time
     def check_time(self):
         current_time = millis()
         if self.status == self.SHOW and current_time - self.show_start_time > self.show_time:
+            # hide the level after a number of seconds
             self.hide()
         elif self.status == self.PLAY:
+            # set the time played
             self.parent_game.set_time_played(current_time - self.play_start_time)
-            
     
+    # Set status to show
     def show(self):
         self.status = self.SHOW
         self.show_start_time = millis()
         self.enable_mouse_action = False
-        
+    
+    # Set status to play
     def hide(self):
         self.status = self.PLAY
         self.grid.hide_tiles()
         self.tiles_status = self.grid.compute_current_grid_state()
+        self.count_hidden_tiles()
         self.play_start_time = millis()
         self.enable_mouse_action = True
-        
+    
+    # Set status to a done state
     def done(self, done_status):
         self.status = done_status
         self.grid.show_tiles()
+        self.count_hidden_tiles()
         self.enable_mouse_action = False
         self.parent_game.current_level_done(self.status)
-        
+    
+    # React to mouse clicks
     def mouseAction(self, mx, my):
         if self.enable_mouse_action:
             res_tile_status = self.grid.mouseAction(mx, my)
             self.evaluate_level(res_tile_status)
-
-    def evaluate_level(self, latest_tile_status):
-        if self.grid_status_changed(latest_tile_status):
-            self.clicks_left = self.clicks_left - 1
-            if self.all_tiles_exposed():
-                self.done(self.SUCCESS) # win level
-            elif self.clicks_left < self.count_hidden_tiles():
-                self.done(self.FAILED) # lose level
-            elif self.clicks_left == 0:
-                self.done(self.FAILED) # lose level
-        self.parent_game.set_level_clicks_left(self.clicks_left)
-        
+    
+    # Check if the grid status has changed
     def grid_status_changed(self, latest_tile_status):
         prev_tile_status = self.tiles_status
         self.tiles_status = latest_tile_status
@@ -355,20 +349,24 @@ class Level():
                     return True
         return False
 
+    # Count the number of hidden tiles
     def count_hidden_tiles(self):
         hidden_tiles = 0
         for ln in range(0, self.num_side_tiles):
             for cl in range(0, self.num_side_tiles):
                 if self.set_tiles[ln][cl] and not self.tiles_status[ln][cl]:
                     hidden_tiles = hidden_tiles + 1
+        self.parent_game.set_level_tiles_left(hidden_tiles)
         return hidden_tiles
-        
+    
+    # Check if all the tiles are exposed
     def all_tiles_exposed(self):
         for ln in range(0, self.num_side_tiles):
             for cl in range(0, self.num_side_tiles):
                 if self.set_tiles[ln][cl] and not self.tiles_status[ln][cl]:
                     return False
         return True
-        
-    def mouseMoving(self, mx, my):
-        self.grid.mouseMoving(mx, my)
+
+    # Check if the mouse is moving above the grid
+    def mouse_moving(self, mx, my):
+        self.grid.mouse_moving(mx, my)
