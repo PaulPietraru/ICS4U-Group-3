@@ -1,14 +1,21 @@
-from game import TilesGame 
-from game import GameCollection 
-from player import PlayerCollection
+# -------------------------------------------------------------------------------
+# Name:           tiles_game.py
+#
+# Purpose:        Main logic of the game
+#
+# Author:         Pietraru.P
+# ------------------------------------------------------------------------------
+
+from player_collection import PlayerCollection
+from game_collection import GameCollection 
 
 SELECTING_PLAYER = 0
 SELECTING_GAME = 1
 PLAYING_GAME = 2
 
 # grid instance to test the positioning and drawing of a grid in Processing
-grid_size = (1440, 800)
-#grid_size = (1920, 1080)
+canvas_size = (1440, 800)
+#canvas_size = (1920, 1080)
 stage = SELECTING_PLAYER
 player_collection = None
 current_player = None
@@ -26,12 +33,12 @@ def setup():
     #bk_img = loadImage("bk_hd.jpg");
 
     # create player and game collections used to select the current player and game
-    player_collection = PlayerCollection("players.txt", grid_size[0], grid_size[1], title_font, bk_img)
-    game_collection = GameCollection(grid_size[0], grid_size[1], title_font, text_font, bk_img)
+    player_collection = PlayerCollection("players.txt", canvas_size, title_font, bk_img)
+    game_collection = GameCollection(canvas_size, title_font, text_font, bk_img)
     
     # set canvas size and frame rate
-    size(grid_size[0], grid_size[1])
-    frameRate(30)
+    size(canvas_size[0], canvas_size[1])
+    frameRate(60)
     
 def draw():
     global stage
@@ -79,3 +86,6 @@ def mouseMoved():
         game_collection.mouse_moving(mouseX, mouseY)
     elif stage == PLAYING_GAME:
         current_game.mouse_moving(mouseX, mouseY)
+        
+def mouseDragged():
+    mouseClicked()

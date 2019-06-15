@@ -1,0 +1,10 @@
+Hulk,4
+Paul Pietraru,3
+Nathan Cross,2
+Paul Pietraru,1
+Elijah Gortson,1
+Jamal Ahmad,1
+Khai Woo,1
+Iron Man,1
+Captain America,1
+Thor,1
